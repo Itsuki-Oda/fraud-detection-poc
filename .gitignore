@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.pyc
+
+# Virtual Environment
+.venv/
+venv/
+
+# Environment variables
+.env
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Mac
+.DS_Store
+
+# Streamlit cache
+.streamlit/
+
+# Model / data (必要なら)
+*.pkl
+*.joblib
+
+# Large files
+*.csv

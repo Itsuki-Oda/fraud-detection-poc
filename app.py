@@ -1,22 +1,11 @@
-import requests
 import streamlit as st
 import streamlit.components.v1 as components
 import pandas as pd
-import os
 import matplotlib.pyplot as plt
 import plotly.graph_objects as go
-from dotenv import load_dotenv
-from openai import AzureOpenAI
+import os
+import requests
 
-load_dotenv()
-
-azure_client = AzureOpenAI(
-    azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
-    api_key=os.getenv("AZURE_OPENAI_API_KEY"),
-    api_version="2024-12-01-preview",
-)
-
-AZURE_OPENAI_DEPLOYMENT = os.getenv("AZURE_OPENAI_DEPLOYMENT")
 
 FEATURE_LABELS = {
 
@@ -63,64 +52,11 @@ FEATURE_LABELS = {
     "cat__country_JP": "国内取引",
 }
 
-def generate_azure_review_comment(row, top_shap_text):
 
-    prompt = f"""
-あなたはカード会社の不正検知アナリストです。
-
-以下の取引について、審査担当者向けのコメントを日本語で作成してください。
-
-条件:
-- 200字以内
-- 箇条書き不要
-- 実務的に
-- 不正の可能性、確認ポイント、推奨アクションを含める
-- 匿名特徴量V1〜V28は「潜在的な異常パターン」と表現する
-- 顧客向けではなく、社内審査担当者向けにする
-
-取引情報:
-fraud_score: {row.get("fraud_score")}
-risk_band: {row.get("risk_band")}
-actual_label: {row.get("actual_label")}
-predicted_label: {row.get("predicted_label")}
-rule_reason: {row.get("rule_reason")}
-shap_reason: {row.get("shap_reason")}
-top_shap_features: {row.get("top_shap_features")}
-
-SHAP上位寄与:
-{top_shap_text}
-
-Amount: {row.get("Amount")}
-country: {row.get("country")}
-channel: {row.get("channel")}
-entry_mode: {row.get("entry_mode")}
-merchant_category: {row.get("merchant_category")}
-is_foreign: {row.get("is_foreign")}
-is_ec: {row.get("is_ec")}
-is_new_device: {row.get("is_new_device")}
-customer_tenure_months: {row.get("customer_tenure_months")}
-authentication_result: {row.get("authentication_result")}
-"""
-
-    response = azure_client.chat.completions.create(
-        model=AZURE_OPENAI_DEPLOYMENT,
-        messages=[
-            {
-                "role": "system",
-                "content": "あなたはカード不正検知の審査支援AIです。簡潔で実務的に説明してください。"
-            },
-            {
-                "role": "user",
-                "content": prompt
-            }
-        ],
-        temperature=0.2,
-        max_tokens=300
-    )
-
-    return response.choices[0].message.content
-
-FASTAPI_URL = "http://api:8000/rag-review-comment"
+FASTAPI_URL = os.getenv(
+    "FASTAPI_URL",
+    "http://localhost:8000/rag-review-comment"
+)
 
 def generate_review_comment_via_api(row, top_shap_text):
     payload = {
